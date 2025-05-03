@@ -1,0 +1,383 @@
+--// Общие переменные и секции //--
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+--// Функции //--
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local localPlayer = Players.LocalPlayer
+
+-- Создаем ScreenGui и TextLabel для отображения координат
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CoordinatesGui"
+screenGui.ResetOnSpawn = false
+
+-- Фон (рамка)
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 250, 0, 40)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+-- Скругление
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0, 10)
+
+-- Обводка (неоновая рамка)
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(100, 100, 120)
+stroke.Thickness = 2
+stroke.Transparency = 0.4
+
+-- Текст
+local textLabel = Instance.new("TextLabel", frame)
+textLabel.Size = UDim2.new(1, -10, 1, 0)
+textLabel.Position = UDim2.new(0, 5, 0, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.Font = Enum.Font.GothamMedium
+textLabel.TextSize = 16
+textLabel.TextXAlignment = Enum.TextXAlignment.Left
+textLabel.Text = "Position: X=0 Y=0 Z=0"
+
+-- Функция для округления координат
+local function formatPosition(position)
+    local x = math.floor(position.X + 0.5)
+    local y = math.floor(position.Y + 0.5)
+    local z = math.floor(position.Z + 0.5)
+    return string.format("Position: X=%d  Y=%d  Z=%d", x, y, z)
+end
+
+-- Обновляем координаты
+local connection
+local function updateLoop()
+    connection = RunService.Heartbeat:Connect(function()
+        textLabel.Text = formatPosition(humanoidRootPart.Position)
+    end)
+end
+
+local Tab = Window:CreateTab("Основной", "square-menu") -- Вкладка
+local CoordSection = Tab:CreateSection("Ввод координат")
+
+local xCoord = 0
+local yCoord = 0
+local zCoord = 0
+
+local Toggle = Tab:CreateToggle({
+   Name = "Показать/Спрятать координаты",
+   CurrentValue = false,
+   Flag = "CoordsToggle",
+   Callback = function(Value)
+   if Value then
+       screenGui.Parent = player:WaitForChild("PlayerGui")
+       updateLoop()
+   else
+       if connection then
+           connection:Disconnect()
+           connection = nil
+       end
+       screenGui.Parent = nil
+   end
+end
+})
+
+-- Кнопка для удаления всех GUI с координатами
+local DeleteCoordsButton = Tab:CreateButton({
+   Name = "Удалить все координаты",
+   Callback = function()
+       -- Ищем все объекты типа ScreenGui с именем "CoordinatesGui" в PlayerGui
+       for _, v in ipairs(player:WaitForChild("PlayerGui"):GetChildren()) do
+           if v:IsA("ScreenGui") and v.Name == "CoordinatesGui" then
+               v:Destroy()  -- Удаляем все GUI с координатами
+               print("GUI с координатами удалено.")
+           end
+       end
+   end,
+})
+
+-- Телепорт к игроку по нику
+Tab:CreateInput({
+	Name = "Телепорт к игроку",
+	PlaceholderText = "Введите ник",
+	RemoveTextAfterFocusLost = true,
+	Callback = function(username)
+		local targetPlayer = game.Players:FindFirstChild(username)
+		local localPlayer = game.Players.LocalPlayer
+
+		if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local targetPos = targetPlayer.Character.HumanoidRootPart.Position
+			local char = localPlayer.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				char:MoveTo(targetPos + Vector3.new(0, 5, 0)) -- немного выше, чтобы не застрять
+				Rayfield:Notify({
+					Title = "Телепорт успешен",
+					Content = "Вы телепортировались к " .. username,
+					Duration = 3
+				})
+			end
+		else
+			Rayfield:Notify({
+				Title = "Ошибка",
+				Content = "Игрок не найден или отсутствует персонаж",
+				Duration = 3
+			})
+		end
+	end
+})
+
+local Divider = Tab:CreateDivider()
+
+Tab:CreateInput({
+    Name = "Координата X",
+    PlaceholderText = "Введите X",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        xCoord = tonumber(Value) or 0
+    end,
+})
+
+Tab:CreateInput({
+    Name = "Координата Y",
+    PlaceholderText = "Введите Y",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        yCoord = tonumber(Value) or 0
+    end,
+})
+
+Tab:CreateInput({
+    Name = "Координата Z",
+    PlaceholderText = "Введите Z",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        zCoord = tonumber(Value) or 0
+    end,
+})
+
+Tab:CreateButton({
+    Name = "🚀 Телепортироваться на координаты",
+    Callback = function()
+        humanoidRootPart.CFrame = CFrame.new(Vector3.new(xCoord, yCoord, zCoord))
+        print("Телепорт на: X="..xCoord.." Y="..yCoord.." Z="..zCoord)
+    end,
+})
+
+-- ⬇ Настройки Полёта
+local flying = false
+local flySpeed = 100 -- Значение по умолчанию
+local bodyGyro, bodyVelocity
+local flyConnection
+
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- ⬇ Включение полёта
+local function startFlying()
+    if flying then return end
+    flying = true
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.P = 9e4
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.CFrame = hrp.CFrame
+    bodyGyro.Parent = hrp
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.Parent = hrp
+
+    flyConnection = RS.RenderStepped:Connect(function()
+        if flying then
+            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+            local moveDir = Vector3.zero
+            if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
+
+            bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.zero
+        end
+    end)
+end
+
+-- ⬇ Выключение полёта
+local function stopFlying()
+    flying = false
+    if bodyGyro then bodyGyro:Destroy() end
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if flyConnection then flyConnection:Disconnect() end
+end
+
+-- Раздел для полёта
+local FlySection = Tab:CreateSection("Полёт")
+
+-- Переключатель полёта
+Tab:CreateToggle({
+    Name = "Включить/Выключить полёт",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            startFlying()
+            Rayfield:Notify({
+                Title = "Полёт активирован",
+                Content = "Управление: WASD + Space + Shift",
+                Duration = 3
+            })
+        else
+            stopFlying()
+            Rayfield:Notify({
+                Title = "Полёт отключён",
+                Content = "",
+                Duration = 2
+            })
+        end
+    end,
+})
+
+-- Ползунок скорости
+Tab:CreateSlider({
+    Name = "Скорость полёта",
+    Range = {50, 300},
+    Increment = 25,
+    Suffix = "скорость",
+    CurrentValue = flySpeed,
+    Callback = function(Value)
+        flySpeed = Value
+    end,
+})
+
+-- Бинд на J для включения/выключения полёта
+Tab:CreateKeybind({
+    Name = "Тоггл полёта (J)",
+    CurrentKeybind = "J",
+    HoldToInteract = false,
+    Callback = function()
+        flying = not flying
+        if flying then
+            startFlying()
+            Rayfield:Notify({
+                Title = "Полёт активирован (через J)",
+                Content = "",
+                Duration = 2
+            })
+        else
+            stopFlying()
+            Rayfield:Notify({
+                Title = "Полёт отключён (через J)",
+                Content = "",
+                Duration = 2
+            })
+        end
+    end,
+})
+
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid") or nil
+
+local defaultSpeed = 16
+if humanoid then
+	defaultSpeed = humanoid.WalkSpeed
+end
+
+local Section = Tab:CreateSection("Движение") -- Название секции
+
+-- Поле ввода скорости
+Tab:CreateInput({
+	Name = "Установить WalkSpeed",
+	PlaceholderText = "Введите число",
+	RemoveTextAfterFocusLost = true,
+	Callback = function(Text)
+		local value = tonumber(Text)
+		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if value and humanoid then
+			humanoid.WalkSpeed = value
+			Rayfield:Notify({
+				Title = "WalkSpeed изменён",
+				Content = "Новая скорость: " .. value,
+				Duration = 3
+			})
+		else
+			Rayfield:Notify({
+				Title = "Ошибка",
+				Content = "Введите корректное число",
+				Duration = 3
+			})
+		end
+	end
+})
+
+-- Кнопка сброса скорости
+Tab:CreateButton({
+	Name = "Сбросить до стандартной скорости",
+	Callback = function()
+		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = defaultSpeed
+			Rayfield:Notify({
+				Title = "Скорость сброшена",
+				Content = "Установлена стандартная: " .. tostring(defaultSpeed),
+				Duration = 3
+			})
+		end
+	end
+})
+
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid") or nil
+
+local defaultJumpPower = 50
+if humanoid then
+	defaultJumpPower = humanoid.JumpPower
+end
+
+local Section = Tab:CreateSection("Прыжки")
+
+-- Поле ввода JumpPower
+Tab:CreateInput({
+	Name = "Установить JumpPower",
+	PlaceholderText = "Введите число",
+	RemoveTextAfterFocusLost = true,
+	Callback = function(Text)
+		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			local value = tonumber(Text)
+			if value then
+				humanoid.JumpPower = value
+				Rayfield:Notify({
+					Title = "JumpPower изменён",
+					Content = "Новое значение: " .. value,
+					Duration = 3
+				})
+			else
+				Rayfield:Notify({
+					Title = "Текущее значение JumpPower",
+					Content = "Сейчас: " .. humanoid.JumpPower,
+					Duration = 3
+				})
+			end
+		end
+	end
+})
+
+-- Кнопка сброса JumpPower
+Tab:CreateButton({
+	Name = "Сбросить JumpPower до стандартного",
+	Callback = function()
+		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.JumpPower = defaultJumpPower
+			Rayfield:Notify({
+				Title = "JumpPower сброшен",
+				Content = "Установлено стандартное: " .. tostring(defaultJumpPower),
+				Duration = 3
+			})
+		end
+	end
+})
