@@ -204,6 +204,8 @@ Tab:CreateKeybind({
     end,
 })
 
+local Section = Tab:CreateSection("Ввод координат")
+
 local xCoord = 0
 local yCoord = 0
 local zCoord = 0
@@ -317,26 +319,31 @@ end
 local Section = Tab:CreateSection("Движение") -- Название секции
 
 -- Поле ввода скорости
-Tab:CreateInput({
+local WalkSpeedInput = Tab:CreateInput({
 	Name = "Установить WalkSpeed",
-	PlaceholderText = "Введите число",
+	PlaceholderText = tostring(defaultSpeed),
 	RemoveTextAfterFocusLost = true,
 	Callback = function(Text)
-		local value = tonumber(Text)
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if value and humanoid then
-			humanoid.WalkSpeed = value
-			Rayfield:Notify({
-				Title = "WalkSpeed изменён",
-				Content = "Новая скорость: " .. value,
-				Duration = 3
-			})
-		else
-			Rayfield:Notify({
-				Title = "Ошибка",
-				Content = "Введите корректное число",
-				Duration = 3
-			})
+		if humanoid then
+			local value = tonumber(Text)
+			if value then
+				humanoid.WalkSpeed = value
+				if WalkSpeedInput then
+					WalkSpeedInput:Set(tostring(value))
+				end
+				Rayfield:Notify({
+					Title = "WalkSpeed изменён",
+					Content = "Новая скорость: " .. value,
+					Duration = 3
+				})
+			else
+				Rayfield:Notify({
+					Title = "Текущее значение WalkSpeed",
+					Content = "Сейчас: " .. humanoid.WalkSpeed,
+					Duration = 3
+				})
+			end
 		end
 	end
 })
@@ -367,9 +374,9 @@ end
 local Section = Tab:CreateSection("Прыжки")
 
 -- Поле ввода JumpPower
-Tab:CreateInput({
+local JumpPowerInput = Tab:CreateInput({
 	Name = "Установить JumpPower",
-	PlaceholderText = "Введите число",
+	PlaceholderText = tostring(defaultJumpPower),
 	RemoveTextAfterFocusLost = true,
 	Callback = function(Text)
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -377,6 +384,9 @@ Tab:CreateInput({
 			local value = tonumber(Text)
 			if value then
 				humanoid.JumpPower = value
+				if JumpPowerInput then
+					JumpPowerInput:Set(tostring(value))
+				end
 				Rayfield:Notify({
 					Title = "JumpPower изменён",
 					Content = "Новое значение: " .. value,
