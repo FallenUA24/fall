@@ -319,7 +319,9 @@ end
 local Section = Tab:CreateSection("Движение") -- Название секции
 
 -- Поле ввода скорости
-local WalkSpeedInput = Tab:CreateInput({
+local WalkSpeedInput
+
+WalkSpeedInput = Tab:CreateInput({
 	Name = "Установить WalkSpeed",
 	PlaceholderText = tostring(defaultSpeed),
 	RemoveTextAfterFocusLost = true,
@@ -329,15 +331,14 @@ local WalkSpeedInput = Tab:CreateInput({
 			local value = tonumber(Text)
 			if value then
 				humanoid.WalkSpeed = value
-				if WalkSpeedInput then
-					WalkSpeedInput:Set(tostring(value))
-				end
+				WalkSpeedInput:Set(tostring(value))
 				Rayfield:Notify({
 					Title = "WalkSpeed изменён",
 					Content = "Новая скорость: " .. value,
 					Duration = 3
 				})
 			else
+				WalkSpeedInput:Set(tostring(humanoid.WalkSpeed))
 				Rayfield:Notify({
 					Title = "Текущее значение WalkSpeed",
 					Content = "Сейчас: " .. humanoid.WalkSpeed,
@@ -348,13 +349,15 @@ local WalkSpeedInput = Tab:CreateInput({
 	end
 })
 
--- Кнопка сброса скорости
 Tab:CreateButton({
 	Name = "Сбросить до стандартной скорости",
 	Callback = function()
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			humanoid.WalkSpeed = defaultSpeed
+			if WalkSpeedInput then
+				WalkSpeedInput:Set(tostring(defaultSpeed))
+			end
 			Rayfield:Notify({
 				Title = "Скорость сброшена",
 				Content = "Установлена стандартная: " .. tostring(defaultSpeed),
@@ -374,7 +377,9 @@ end
 local Section = Tab:CreateSection("Прыжки")
 
 -- Поле ввода JumpPower
-local JumpPowerInput = Tab:CreateInput({
+local JumpPowerInput
+
+JumpPowerInput = Tab:CreateInput({
 	Name = "Установить JumpPower",
 	PlaceholderText = tostring(defaultJumpPower),
 	RemoveTextAfterFocusLost = true,
@@ -384,15 +389,14 @@ local JumpPowerInput = Tab:CreateInput({
 			local value = tonumber(Text)
 			if value then
 				humanoid.JumpPower = value
-				if JumpPowerInput then
-					JumpPowerInput:Set(tostring(value))
-				end
+				JumpPowerInput:Set(tostring(value))
 				Rayfield:Notify({
 					Title = "JumpPower изменён",
 					Content = "Новое значение: " .. value,
 					Duration = 3
 				})
 			else
+				JumpPowerInput:Set(tostring(humanoid.JumpPower))
 				Rayfield:Notify({
 					Title = "Текущее значение JumpPower",
 					Content = "Сейчас: " .. humanoid.JumpPower,
@@ -403,13 +407,15 @@ local JumpPowerInput = Tab:CreateInput({
 	end
 })
 
--- Кнопка сброса JumpPower
 Tab:CreateButton({
 	Name = "Сбросить JumpPower до стандартного",
 	Callback = function()
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			humanoid.JumpPower = defaultJumpPower
+			if JumpPowerInput then
+				JumpPowerInput:Set(tostring(defaultJumpPower))
+			end
 			Rayfield:Notify({
 				Title = "JumpPower сброшен",
 				Content = "Установлено стандартное: " .. tostring(defaultJumpPower),
@@ -418,4 +424,5 @@ Tab:CreateButton({
 		end
 	end
 })
+
 Rayfield:LoadConfiguration()
