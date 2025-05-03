@@ -324,6 +324,7 @@ local WalkSpeedInput = Tab:CreateInput({
 	PlaceholderText = tostring(defaultSpeed),
 	RemoveTextAfterFocusLost = true,
 	Callback = function(Text)
+	if Text == "" then return end
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			local value = tonumber(Text)
@@ -379,6 +380,7 @@ local JumpPowerInput = Tab:CreateInput({
 	PlaceholderText = tostring(defaultJumpPower),
 	RemoveTextAfterFocusLost = true,
 	Callback = function(Text)
+	if Text == "" then return end
 		humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			local value = tonumber(Text)
