@@ -84,6 +84,127 @@ end
 local Tab = Window:CreateTab("Основной", "square-menu") -- Вкладка
 local CoordSection = Tab:CreateSection("Ввод координат")
 
+-- ⬇ Общие переменные
+local player = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+
+local flying = false
+local flySpeed = 100
+local bodyGyro, bodyVelocity
+local flyConnection
+
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- ⬇ Включение полёта
+local function startFlying()
+    if flying then return end
+    flying = true
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.P = 9e4
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.CFrame = hrp.CFrame
+    bodyGyro.Parent = hrp
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.Parent = hrp
+
+    flyConnection = RS.RenderStepped:Connect(function()
+        if flying then
+            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+            local moveDir = Vector3.zero
+            if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
+
+            bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.zero
+        end
+    end)
+end
+
+-- ⬇ Выключение полёта
+local function stopFlying()
+    flying = false
+    if bodyGyro then bodyGyro:Destroy() end
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if flyConnection then flyConnection:Disconnect() end
+end
+
+-- ⬇ Раздел интерфейса
+local FlySection = Tab:CreateSection("Полёт")
+
+-- Сохраняем ссылку на Toggle
+local FlyToggle
+
+FlyToggle = Tab:CreateToggle({
+    Name = "Включить/Выключить полёт",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            startFlying()
+            Rayfield:Notify({
+                Title = "Полёт активирован",
+                Content = "",
+                Duration = 3
+            })
+        else
+            stopFlying()
+            Rayfield:Notify({
+                Title = "Полёт отключён",
+                Content = "",
+                Duration = 2
+            })
+        end
+    end,
+})
+
+-- ⬇ Поле ввода скорости
+local FlySpeedInput = Tab:CreateInput({
+    Name = "Скорость полёта",
+    PlaceholderText = tostring(flySpeed), -- начальное значение
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local number = tonumber(Text)
+        if number then
+            flySpeed = number
+            Rayfield:Notify({
+                Title = "Скорость установлена",
+                Content = "Новая скорость полёта: " .. number,
+                Duration = 2
+            })
+            -- Обновляем текст в поле
+            if FlySpeedInput then
+                FlySpeedInput:Set(tostring(number))
+            end
+        else
+            Rayfield:Notify({
+                Title = "Ошибка",
+                Content = "Введите корректное число!",
+                Duration = 2
+            })
+        end
+    end,
+})
+
+-- Бинд теперь будет менять значение Toggle, а не напрямую полёт
+Tab:CreateKeybind({
+    Name = "Бинд полёта",
+    CurrentKeybind = "",
+    HoldToInteract = false,
+    Callback = function()
+        if FlyToggle then
+            FlyToggle:Set(not flying)
+        end
+    end,
+})
+
 local xCoord = 0
 local yCoord = 0
 local zCoord = 0
@@ -184,120 +305,6 @@ Tab:CreateButton({
     Callback = function()
         humanoidRootPart.CFrame = CFrame.new(Vector3.new(xCoord, yCoord, zCoord))
         print("Телепорт на: X="..xCoord.." Y="..yCoord.." Z="..zCoord)
-    end,
-})
-
--- ⬇ Настройки Полёта
-local flying = false
-local flySpeed = 100 -- Значение по умолчанию
-local bodyGyro, bodyVelocity
-local flyConnection
-
-local UIS = game:GetService("UserInputService")
-local RS = game:GetService("RunService")
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-
--- ⬇ Включение полёта
-local function startFlying()
-    if flying then return end
-    flying = true
-
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.P = 9e4
-    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bodyGyro.CFrame = hrp.CFrame
-    bodyGyro.Parent = hrp
-
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.zero
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bodyVelocity.Parent = hrp
-
-    flyConnection = RS.RenderStepped:Connect(function()
-        if flying then
-            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-            local moveDir = Vector3.zero
-            if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += workspace.CurrentCamera.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= workspace.CurrentCamera.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= workspace.CurrentCamera.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += workspace.CurrentCamera.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
-            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
-
-            bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.zero
-        end
-    end)
-end
-
--- ⬇ Выключение полёта
-local function stopFlying()
-    flying = false
-    if bodyGyro then bodyGyro:Destroy() end
-    if bodyVelocity then bodyVelocity:Destroy() end
-    if flyConnection then flyConnection:Disconnect() end
-end
-
--- Раздел для полёта
-local FlySection = Tab:CreateSection("Полёт")
-
--- Переключатель полёта
-Tab:CreateToggle({
-    Name = "Включить/Выключить полёт",
-    CurrentValue = false,
-    Callback = function(Value)
-        if Value then
-            startFlying()
-            Rayfield:Notify({
-                Title = "Полёт активирован",
-                Content = "Управление: WASD + Space + Shift",
-                Duration = 3
-            })
-        else
-            stopFlying()
-            Rayfield:Notify({
-                Title = "Полёт отключён",
-                Content = "",
-                Duration = 2
-            })
-        end
-    end,
-})
-
--- Ползунок скорости
-Tab:CreateSlider({
-    Name = "Скорость полёта",
-    Range = {50, 300},
-    Increment = 25,
-    Suffix = "скорость",
-    CurrentValue = flySpeed,
-    Callback = function(Value)
-        flySpeed = Value
-    end,
-})
-
--- Бинд на J для включения/выключения полёта
-Tab:CreateKeybind({
-    Name = "Тоггл полёта (J)",
-    CurrentKeybind = "J",
-    HoldToInteract = false,
-    Callback = function()
-        flying = not flying
-        if flying then
-            startFlying()
-            Rayfield:Notify({
-                Title = "Полёт активирован (через J)",
-                Content = "",
-                Duration = 2
-            })
-        else
-            stopFlying()
-            Rayfield:Notify({
-                Title = "Полёт отключён (через J)",
-                Content = "",
-                Duration = 2
-            })
-        end
     end,
 })
 
