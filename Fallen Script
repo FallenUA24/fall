@@ -204,11 +204,11 @@ Tab:CreateKeybind({
     end,
 })
 
-local CoordSection = Tab:CreateSection("Ввод координат")
-
 local xCoord = 0
 local yCoord = 0
 local zCoord = 0
+
+local CoordSection = Tab:CreateSection("Ввод координат")
 
 local Toggle = Tab:CreateToggle({
    Name = "Показать/Спрятать координаты",
