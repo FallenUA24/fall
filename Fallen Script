@@ -1,12 +1,23 @@
-return function(Window)
-   local MainTab = Window:CreateTab("Главная", 4483362458)
-   MainTab:CreateButton({
-      Name = "Пример",
-      Callback = function()
-         print("Работает!")
-      end,
-   })
-end
+--// Основной Код //--
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+--// Окно //--
+local Window = Rayfield:CreateWindow({
+   Name = "Fallen Executor",
+   Icon = "dot", -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "Самый ебейший скрипт",
+   LoadingSubtitle = "by Fallenqq",
+   Theme = "Default",
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   }
+})
 
 --// Общие переменные и секции //--
 local Players = game:GetService("Players")
@@ -391,3 +402,4 @@ Tab:CreateButton({
 		end
 	end
 })
+Rayfield:LoadConfiguration()
