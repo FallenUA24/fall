@@ -82,7 +82,6 @@ local function updateLoop()
 end
 
 local Tab = Window:CreateTab("Основной", "square-menu") -- Вкладка
-local CoordSection = Tab:CreateSection("Ввод координат")
 
 -- ⬇ Общие переменные
 local player = game:GetService("Players").LocalPlayer
@@ -204,6 +203,8 @@ Tab:CreateKeybind({
         end
     end,
 })
+
+local CoordSection = Tab:CreateSection("Ввод координат")
 
 local xCoord = 0
 local yCoord = 0
