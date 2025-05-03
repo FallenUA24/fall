@@ -1,3 +1,13 @@
+return function(Window)
+   local MainTab = Window:CreateTab("Главная", 4483362458)
+   MainTab:CreateButton({
+      Name = "Пример",
+      Callback = function()
+         print("Работает!")
+      end,
+   })
+end
+
 --// Общие переменные и секции //--
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
