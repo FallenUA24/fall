@@ -29,6 +29,38 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local localPlayer = Players.LocalPlayer
 
+local RTab = Window:CreateTab("Main", "square-menu")
+local Section = RTab:CreateSection("Rune Control")
+
+local followConnection
+
+RTab:CreateToggle({
+    Name = "Rune follows player",
+    CurrentValue = false,
+    Callback = function(enabled)
+        local rune = workspace:WaitForChild("Runes"):WaitForChild("Rune2"):WaitForChild("Glow"):WaitForChild("Rune")
+        rune.Anchored = true
+
+        if enabled then
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local root = character:WaitForChild("HumanoidRootPart")
+
+            followConnection = task.spawn(function()
+                while true do
+                    if not enabled then break end
+                    rune.Position = root.Position + Vector3.new(0, 1, 0)
+                    task.wait(0.05)
+                end
+            end)
+        else
+            if followConnection then
+                task.cancel(followConnection)
+            end
+        end
+    end,
+})
+
 -- Создаем ScreenGui и TextLabel для отображения координат
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "CoordinatesGui"
