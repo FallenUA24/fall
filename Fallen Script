@@ -267,6 +267,60 @@ Tab:CreateKeybind({
     end,
 })
 
+local flyConnection
+local targetName = ""
+
+local Section = Tab:CreateSection("Игрок")
+
+Tab:CreateInput({
+    Name = "Ник игрока",
+    PlaceholderText = "Введи ник",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(text)
+        targetName = text
+    end
+})
+
+Tab:CreateToggle({
+    Name = "Летать над игроком",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            local localPlayer = game.Players.LocalPlayer
+            local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+            local root = character:WaitForChild("HumanoidRootPart")
+
+            -- Поиск цели
+            local function getTarget()
+                for _, plr in pairs(game.Players:GetPlayers()) do
+                    if plr.Name:lower():match(targetName:lower()) then
+                        return plr
+                    end
+                end
+                return nil
+            end
+
+            flyConnection = task.spawn(function()
+                while enabled do
+                    local targetPlayer = getTarget()
+                    if targetPlayer and targetPlayer.Character then
+                        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if targetRoot then
+                            root.Velocity = Vector3.zero
+                            root.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 5, 0))
+                        end
+                    end
+                    task.wait(0.05)
+                end
+            end)
+        else
+            if flyConnection then
+                task.cancel(flyConnection)
+            end
+        end
+    end
+})
+
 local Section = Tab:CreateSection("Ввод координат")
 
 local xCoord = 0
