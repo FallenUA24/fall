@@ -29,12 +29,12 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local localPlayer = Players.LocalPlayer
 
-local PITab = Window:CreateTab("Pet Incremental", "paw-print")
-local Section = PITab:CreateSection("Руны")
+local PetTab = Window:CreateTab("Pet Incremental", "paw-print")
+local Section = PetTab:CreateSection("Руны")
 
 local followConnection
 
-PITab:CreateToggle({
+PetTab:CreateToggle({
     Name = "Rune2 Авто-открытие",
     CurrentValue = false,
     Callback = function(enabled)
