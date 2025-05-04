@@ -33,10 +33,13 @@ local PetTab = Window:CreateTab("Pet Incremental", "paw-print")
 local Section = PetTab:CreateSection("Руны")
 
 local rune1Connection
+local rune1Enabled = false
+
 PetTab:CreateToggle({
     Name = "Rune1 Авто-открытие",
     CurrentValue = false,
     Callback = function(enabled)
+        rune1Enabled = enabled
         local rune = workspace:WaitForChild("Runes"):WaitForChild("Rune1"):WaitForChild("Glow"):WaitForChild("Rune")
         rune.Anchored = true
 
@@ -46,7 +49,7 @@ PetTab:CreateToggle({
             local root = character:WaitForChild("HumanoidRootPart")
 
             rune1Connection = task.spawn(function()
-                while enabled do
+                while rune1Enabled and root and root.Parent do
                     rune.Position = root.Position + Vector3.new(0, 1, 0)
                     task.wait(0.05)
                 end
@@ -60,10 +63,13 @@ PetTab:CreateToggle({
 })
 
 local rune2Connection
+local rune2Enabled = false
+
 PetTab:CreateToggle({
     Name = "Rune2 Авто-открытие",
     CurrentValue = false,
     Callback = function(enabled)
+        rune2Enabled = enabled
         local rune = workspace:WaitForChild("Runes"):WaitForChild("Rune2"):WaitForChild("Glow"):WaitForChild("Rune")
         rune.Anchored = true
 
@@ -73,7 +79,7 @@ PetTab:CreateToggle({
             local root = character:WaitForChild("HumanoidRootPart")
 
             rune2Connection = task.spawn(function()
-                while enabled do
+                while rune2Enabled and root and root.Parent do
                     rune.Position = root.Position + Vector3.new(0, 1, 0)
                     task.wait(0.05)
                 end
