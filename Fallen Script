@@ -32,8 +32,7 @@ local localPlayer = Players.LocalPlayer
 local PetTab = Window:CreateTab("Pet Incremental", "paw-print")
 local Section = PetTab:CreateSection("Руны")
 
-local followConnection
-
+local rune1Connection
 PetTab:CreateToggle({
     Name = "Rune1 Авто-открытие",
     CurrentValue = false,
@@ -46,21 +45,21 @@ PetTab:CreateToggle({
             local character = player.Character or player.CharacterAdded:Wait()
             local root = character:WaitForChild("HumanoidRootPart")
 
-            followConnection = task.spawn(function()
-                while true do
-                    if not enabled then break end
+            rune1Connection = task.spawn(function()
+                while enabled do
                     rune.Position = root.Position + Vector3.new(0, 1, 0)
                     task.wait(0.05)
                 end
             end)
         else
-            if followConnection then
-                task.cancel(followConnection)
+            if rune1Connection then
+                task.cancel(rune1Connection)
             end
         end
     end,
 })
 
+local rune2Connection
 PetTab:CreateToggle({
     Name = "Rune2 Авто-открытие",
     CurrentValue = false,
@@ -73,16 +72,15 @@ PetTab:CreateToggle({
             local character = player.Character or player.CharacterAdded:Wait()
             local root = character:WaitForChild("HumanoidRootPart")
 
-            followConnection = task.spawn(function()
-                while true do
-                    if not enabled then break end
+            rune2Connection = task.spawn(function()
+                while enabled do
                     rune.Position = root.Position + Vector3.new(0, 1, 0)
                     task.wait(0.05)
                 end
             end)
         else
-            if followConnection then
-                task.cancel(followConnection)
+            if rune2Connection then
+                task.cancel(rune2Connection)
             end
         end
     end,
