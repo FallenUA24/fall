@@ -122,6 +122,98 @@ PetTab:CreateToggle({
     end,
 })
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local highlightEnabled = false
+
+-- Функция создания BillboardGui с ником
+local function applyNameTag(character, playerName)
+    if character:FindFirstChild("Head") and not character:FindFirstChild("NameTag") then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "NameTag"
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+        billboard.Adornee = character:FindFirstChild("Head")
+        billboard.AlwaysOnTop = true
+        billboard.Parent = character
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = playerName
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.TextStrokeTransparency = 0
+        textLabel.TextScaled = true
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.Parent = billboard
+    end
+end
+
+-- Добавление хайлайта
+local function applyHighlight(character, playerName)
+    local highlight = character:FindFirstChildOfClass("Highlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.FillColor = Color3.fromRGB(0, 0, 255)
+        highlight.FillTransparency = 0.8
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 255)
+        highlight.OutlineTransparency = 0
+        highlight.Parent = character
+    end
+    applyNameTag(character, playerName)
+end
+
+-- Удаление хайлайта и ника
+local function removeHighlight(character)
+    local highlight = character:FindFirstChildOfClass("Highlight")
+    if highlight then highlight:Destroy() end
+
+    local tag = character:FindFirstChild("NameTag")
+    if tag then tag:Destroy() end
+end
+
+-- Включение/выключение
+local function toggleHighlights(state)
+    highlightEnabled = state
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            if highlightEnabled then
+                applyHighlight(player.Character, player.DisplayName or player.Name)
+            else
+                removeHighlight(player.Character)
+            end
+        end
+    end
+end
+
+-- Интерфейс тоггла
+local Toggle = PetTab:CreateToggle({
+    Name = "Показать Highlight + Ники (кроме себя)",
+    CurrentValue = false,
+    Callback = function(Value)
+        toggleHighlights(Value)
+    end
+})
+
+-- Обновление при новых игроках
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if highlightEnabled and player ~= LocalPlayer then
+            applyHighlight(character, player.DisplayName or player.Name)
+        end
+    end)
+end)
+
+-- Обновление для уже подключённых
+for _, player in ipairs(Players:GetPlayers()) do
+    player.CharacterAdded:Connect(function(character)
+        if highlightEnabled and player ~= LocalPlayer then
+            applyHighlight(character, player.DisplayName or player.Name)
+        end
+    end)
+end
+
 local rune2Connection
 local rune2Enabled = false
 
