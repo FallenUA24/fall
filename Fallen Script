@@ -132,7 +132,7 @@ local function applyNameTag(character, playerName)
     if character:FindFirstChild("Head") and not character:FindFirstChild("NameTag") then
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "NameTag"
-        billboard.Size = UDim2.new(0, 100, 0, 20) -- уменьшен размер
+        billboard.Size = UDim2.new(0, 100, 0, 20) -- фиксированный размер
         billboard.StudsOffset = Vector3.new(0, 2.5, 0)
         billboard.Adornee = character.Head
         billboard.AlwaysOnTop = true
@@ -143,9 +143,10 @@ local function applyNameTag(character, playerName)
         textLabel.BackgroundTransparency = 1
         textLabel.Text = playerName
         textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        textLabel.TextStrokeTransparency = 0.5 -- лёгкая обводка
-        textLabel.TextScaled = true
-        textLabel.Font = Enum.Font.GothamSemibold -- более аккуратный шрифт
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.Font = Enum.Font.Gotham
+        textLabel.TextScaled = false -- ОЧЕНЬ ВАЖНО: отключаем автоматическое масштабирование
+        textLabel.TextSize = 14 -- фиксированный размер шрифта
         textLabel.Parent = billboard
     end
 end
