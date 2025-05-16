@@ -208,6 +208,7 @@ local Tab = Window:CreateTab("Основной", "square-menu") -- Вкладк�
 
 -- ⬇ Общие переменные
 local player = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
 
 local flying = false
@@ -217,7 +218,6 @@ local flyConnection
 
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
-local humanoid = character:WaitForChild("Humanoid")
 
 -- ⬇ Включение полёта
 local function startFlying()
@@ -238,22 +238,15 @@ local function startFlying()
     flyConnection = RS.RenderStepped:Connect(function()
         if flying then
             bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+            local moveDir = Vector3.zero
+            if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= workspace.CurrentCamera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += workspace.CurrentCamera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
 
-            local moveDir = humanoid.MoveDirection
-            local camUp = workspace.CurrentCamera.CFrame.UpVector
-            if moveDir.Magnitude > 0 then
-                bodyVelocity.Velocity = moveDir.Unit * flySpeed
-            else
-                bodyVelocity.Velocity = Vector3.zero
-            end
-
-            -- Вертикальное управление для ПК (пробел/шифт)
-            local UIS = game:GetService("UserInputService")
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then
-                bodyVelocity.Velocity += camUp * flySpeed
-            elseif UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
-                bodyVelocity.Velocity -= camUp * flySpeed
-            end
+            bodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.zero
         end
     end)
 end
@@ -269,7 +262,9 @@ end
 -- ⬇ Раздел интерфейса
 local FlySection = Tab:CreateSection("Полёт")
 
+-- Сохраняем ссылку на Toggle
 local FlyToggle
+
 FlyToggle = Tab:CreateToggle({
     Name = "Включить/Выключить полёт",
     CurrentValue = false,
@@ -278,7 +273,7 @@ FlyToggle = Tab:CreateToggle({
             startFlying()
             Rayfield:Notify({
                 Title = "Полёт активирован",
-                Content = "Управление джойстиком (моб) или клавишами (ПК)",
+                Content = "",
                 Duration = 3
             })
         else
@@ -295,7 +290,7 @@ FlyToggle = Tab:CreateToggle({
 -- ⬇ Поле ввода скорости
 local FlySpeedInput = Tab:CreateInput({
     Name = "Скорость полёта",
-    PlaceholderText = tostring(flySpeed),
+    PlaceholderText = tostring(flySpeed), -- начальное значение
     RemoveTextAfterFocusLost = false,
     Callback = function(Text)
         local number = tonumber(Text)
@@ -306,6 +301,7 @@ local FlySpeedInput = Tab:CreateInput({
                 Content = "Новая скорость полёта: " .. number,
                 Duration = 2
             })
+            -- Обновляем текст в поле
             if FlySpeedInput then
                 FlySpeedInput:Set(tostring(number))
             end
